@@ -14,5 +14,6 @@
   * [Using Inline Styles](examples/inline_styles.md)
   * [Using CSS Classes](examples/css_classes.md)
   * [Using Global Style Overrides](examples/global_overrides.md)
+  * [Modal Events](examples/events.md)
 
 * [Contributing](contributing/README.md)
