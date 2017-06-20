@@ -56,7 +56,7 @@ coveralls:
 	-cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js 2>/dev/null
 
 tests-ci: clean lint
-	@COVERAGE=$(COVERAGE) make tests-single-run coveralls
+	@make tests-single-run coveralls
 
 lint:
 	@npm run lint
