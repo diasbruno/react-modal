@@ -9,49 +9,46 @@ Modal.setAppElement('#example');
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = { modal1: false, modal2: false };
+    this.state = { 
+      modalA: false,
+      modalB: false,
+      modalC: false
+    };
   }
 
-  toggleModal_1 = () => {
-    this.setState({ ...this.state, modal1: !this.state.modal1 });
-  }
-
-  toggleModal_2 = event => {
-    event.preventDefault();
-    this.setState({ ...this.state, modal2: !this.state.modal2 });
-  }
-
-  handleModalCloseRequest = () => {
-    // opportunity to validate something and keep the modal open even if it
-    // requested to be closed
-    this.setState({ ...this.state, modal1: false });
+  toggleModal = (modalNumber) => {
+    const modalName = `modal${modalNumber}`;
+    this.setState(state => ({ 
+      [modalName]: !state[modalName]
+    }));
   }
 
   handleInputChange = () => {
-    this.setState({ ...this.state, foo: 'bar' });
+    this.setState({ foo: 'bar' });
   }
 
   handleOnAfterOpenModal = () => {
     // when ready, we can access the available refs.
-    this.refs.title.style.color = '#F00';
+    this.title.style.color = '#F00';
   }
 
   render() {
-    const { modal1, modal2 } = this.state;
+    const { modalA, modalB, modalC } = this.state;
     return (
       <div>
-        <button onClick={this.toggleModal_1}>Open Modal A</button>
-        <button onClick={this.toggleModal_2}>Open Modal B</button>
+        <button onClick={() => this.toggleModal('A')}>Open Modal A</button>
+        <button onClick={() => this.toggleModal('B')}>Open Modal B</button>
+        <button onClick={() => this.toggleModal('C')}>Open Modal C</button>
         <Modal
-          ref="mymodal"
-          id="test"
+          id="modalA"
           closeTimeoutMS={150}
-          isOpen={modal1}
+          isOpen={modalA}
           contentLabel="modalA"
           onAfterOpen={this.handleOnAfterOpenModal}
-          onRequestClose={this.handleModalCloseRequest}>
-          <h1 ref="title">Hello</h1>
-          <button onClick={this.toggleModal_1}>close</button>
+          onRequestClose={() => this.toggleModal('A')}
+        >
+          <h1 ref={el => this.title = el}>Hello</h1>
+          <button onClick={() => this.toggleModal('A')}>close</button>
           <div>I am a modal</div>
           <form>
             <input onChange={this.handleInputChange} />
@@ -64,17 +61,28 @@ class App extends Component {
             <button>hi</button>
             <button>hi</button>
             <button>hi</button>
-            <button onClick={this.toggleModal_2}>Open Modal B</button>
+            <button onClick={e => { e.preventDefault(); this.toggleModal('B'); }}>Open Modal B</button>
           </form>
         </Modal>
-        <Modal ref="mymodal2"
-               id="test2"
-               closeTimeoutMS={150}
-               contentLabel="modalB"
-               isOpen={modal2}
-               onAfterOpen={() => {}}
-               onRequestClose={this.toggleModal_2}>
-          <p>test</p>
+        <Modal
+          id="modalB"
+          closeTimeoutMS={150}
+          contentLabel="modalB"
+          isOpen={modalB}
+          onAfterOpen={() => {}}
+          onRequestClose={() => this.toggleModal('B')}
+          bodyOpenClassName="modalB--body"
+        >
+          <p>Modal B</p>
+        </Modal>
+        <Modal
+          id="modalC"
+          contentLabel="modalC"
+          isOpen={modalC}
+          onAfterOpen={() => {}}
+          onRequestClose={() => this.toggleModal('C')}
+        >
+          <h2>Modal C</h2>
         </Modal>
       </div>
     );
