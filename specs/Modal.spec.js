@@ -166,6 +166,7 @@ describe('State', () => {
     expect(
       moverlay(modal).className.includes('myOverlayClass')
     ).toBeTruthy();
+    unmountModal();
   });
 
   it('overrides content classes with custom object className', () => {
@@ -210,6 +211,7 @@ describe('State', () => {
     expect(
       document.body.className.indexOf('custom-modal-open') > -1
     ).toBeTruthy();
+    unmountModal();
   });
 
   it('don\'t append class to document.body if modal is not open', () => {
@@ -233,11 +235,31 @@ describe('State', () => {
   it('remove class from document.body when no modals opened', () => {
     renderModal({ isOpen: true });
     renderModal({ isOpen: true });
+    
     expect(isBodyWithReactModalOpenClass()).toBeTruthy();
     unmountModal();
     expect(isBodyWithReactModalOpenClass()).toBeTruthy();
     unmountModal();
-    expect(!isBodyWithReactModalOpenClass()).toBeTruthy();
+    expect(isBodyWithReactModalOpenClass()).toBeFalsy();
+  });
+  
+  it('should not add classes to document.body for unopened modals', () => {
+    renderModal({ isOpen: true });
+    expect(isBodyWithReactModalOpenClass()).toBeTruthy();
+    renderModal({ isOpen: false, bodyOpenClassName: 'testBodyClass' });
+    expect(isBodyWithReactModalOpenClass('testBodyClass')).toBeFalsy();
+  });
+
+  it('should not remove classes from document.body when rendering unopened modal', () => {
+    renderModal({ isOpen: true });
+    expect(isBodyWithReactModalOpenClass()).toBeTruthy();
+    renderModal({ isOpen: false, bodyOpenClassName: 'testBodyClass' });
+    renderModal({ isOpen: false });
+    expect(isBodyWithReactModalOpenClass('testBodyClass')).toBeFalsy();
+    expect(isBodyWithReactModalOpenClass()).toBeTruthy();
+    renderModal({ isOpen: false });
+    renderModal({ isOpen: false });
+    expect(isBodyWithReactModalOpenClass()).toBeTruthy();
   });
 
   it('removes aria-hidden from appElement when unmounted w/o closing', () => {

@@ -29,11 +29,6 @@ export function show(appElement) {
   (appElement || globalElement).removeAttribute('aria-hidden');
 }
 
-export function toggle(shouldHide, appElement) {
-  const apply = shouldHide ? hide : show;
-  apply(appElement);
-}
-
 export function resetForTesting() {
   globalElement = document.body;
 }

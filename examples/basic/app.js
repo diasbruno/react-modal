@@ -6,31 +6,58 @@ const appElement = document.getElementById('example');
 
 Modal.setAppElement('#example');
 
+class Form extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { value: '' };
+    this.handleInputChange = this.handleInputChange.bind(this);
+  }
+
+  handleInputChange(e) {
+    this.setState({
+      value: e.target.value
+    });
+  }
+
+  render() {
+    return (
+      <form>
+        <input
+          id="input1"
+          value={this.state.value}
+          placeholder="enter text here"
+          onChange={this.handleInputChange}
+        />
+      </form>
+    );
+  }
+}
+
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = { 
+    this.state = {
       modalA: false,
       modalB: false,
       modalC: false
     };
   }
 
-  toggleModal = (modalNumber) => {
+  toggleModal = modalNumber => {
     const modalName = `modal${modalNumber}`;
-    this.setState(state => ({ 
+    this.setState(state => ({
       [modalName]: !state[modalName]
     }));
-  }
+  };
 
   handleInputChange = () => {
     this.setState({ foo: 'bar' });
-  }
+  };
 
   handleOnAfterOpenModal = () => {
     // when ready, we can access the available refs.
     this.title.style.color = '#F00';
-  }
+  };
 
   render() {
     const { modalA, modalB, modalC } = this.state;
@@ -50,18 +77,34 @@ class App extends Component {
           <h1 ref={el => this.title = el}>Hello</h1>
           <button onClick={() => this.toggleModal('A')}>close</button>
           <div>I am a modal</div>
+          <Form />
           <form>
             <input onChange={this.handleInputChange} />
             <input />
             <input />
             <input />
             <input />
-            <br/>
+            <br />
             <button>hi</button>
             <button>hi</button>
             <button>hi</button>
             <button>hi</button>
-            <button onClick={e => { e.preventDefault(); this.toggleModal('B'); }}>Open Modal B</button>
+            <button
+              onClick={e => {
+                e.preventDefault();
+                this.toggleModal('B');
+              }}
+            >
+              Open Modal B
+            </button>
+            <button
+              onClick={e => {
+                e.preventDefault();
+                this.toggleModal('C');
+              }}
+            >
+              Open Modal C
+            </button>
           </form>
         </Modal>
         <Modal
@@ -89,4 +132,4 @@ class App extends Component {
   }
 }
 
-ReactDOM.render(<App/>, appElement);
+ReactDOM.render(<App />, appElement);
