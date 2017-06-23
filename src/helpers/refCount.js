@@ -4,6 +4,14 @@ import * as ariaAppHider from './ariaAppHider';
 
 const modals = {};
 
+function totalCount() {
+  // Find all modal types and filter out empty arrays
+  const values = Object.keys(modals)
+    .map(key => modals[key])
+    .filter(el => el.length) || [];
+  return values.length;
+}
+
 export function add(element) {
   const { props } = element;
   const identifier = props.id || props.contentLabel || props;
@@ -13,7 +21,7 @@ export function add(element) {
   let modalReference = modals[bodyClassName];
   if (!modalReference) {
     modals[bodyClassName] = [];
-    modalReference = modals[bodyClassName] 
+    modalReference = modals[bodyClassName];
   }
 
   // Add reference to modal for specified key
@@ -52,10 +60,4 @@ export function remove(element) {
   if (props.ariaHideApp && totalCount() < 1) {
     ariaAppHider.show(props.appElement);
   }
-}
-
-function totalCount() {
-  // Find all modal types and filter out empty arrays
-  const values = Object.keys(modals).map(key => modals[key]).filter(el => el.length) || [];
-  return values.length;
 }

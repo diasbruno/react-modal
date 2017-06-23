@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import ExecutionEnvironment from 'exenv';
-import elementClass from 'element-class';
 import ModalPortal from './ModalPortal';
 import * as ariaAppHider from '../helpers/ariaAppHider';
 import * as refCount from '../helpers/refCount';
@@ -66,8 +65,8 @@ export default class Modal extends Component {
 
   static defaultProps = {
     isOpen: false,
-    portalClassName: portalClassName,
-    bodyOpenClassName: bodyOpenClassName,
+    portalClassName,
+    bodyOpenClassName,
     ariaHideApp: true,
     closeTimeoutMS: 0,
     shouldCloseOnOverlayClick: true,
@@ -160,8 +159,7 @@ export default class Modal extends Component {
   }
 
   renderPortal = props => {
-    const { isOpen, bodyOpenClassName } = props;
-    if (isOpen) {
+    if (props.isOpen) {
       refCount.add(this);
     } else {
       refCount.remove(this);
