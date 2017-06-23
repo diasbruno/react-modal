@@ -24,8 +24,8 @@ export function add(element) {
     modalReference = modals[bodyClassName];
   }
 
-  // Add reference to modal for specified key
-  if (!modalReference.includes(identifier)) {
+  // Add reference to modal for specified key if it does not exist already
+  if (modalReference.indexOf(identifier) === -1) {
     modalReference.push(identifier);
   }
 
