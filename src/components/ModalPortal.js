@@ -74,6 +74,14 @@ export default class ModalPortal extends Component {
   }
 
   componentWillReceiveProps(newProps) {
+    if (process.env.NODE_ENV !== "production") {
+      if (newProps.bodyOpenClassName !== this.props.bodyOpenClassName) {
+        console.warn(
+          'React-Modal: "bodyOpenClassName" prop has been modified. ' + 
+          'This may cause unexpected behavior when multiple modals are open.'
+        );
+      }
+    }
     // Focus only needs to be set once when the modal is being opened
     if (!this.props.isOpen && newProps.isOpen) {
       this.setFocusAfterRender(true);
