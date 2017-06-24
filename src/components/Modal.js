@@ -1,19 +1,14 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import ExecutionEnvironment from 'exenv';
 import ModalPortal from './ModalPortal';
 import * as ariaAppHider from '../helpers/ariaAppHider';
-import * as refCount from '../helpers/refCount';
+import { AppElement, SafeHTMLElement } from '../helpers/appElement';
 
 export const portalClassName = 'ReactModalPortal';
 export const bodyOpenClassName = 'ReactModal__Body--open';
 
-const EE = ExecutionEnvironment;
 const renderSubtreeIntoContainer = ReactDOM.unstable_renderSubtreeIntoContainer;
-
-const SafeHTMLElement = EE.canUseDOM ? window.HTMLElement : {};
-const AppElement = EE.canUseDOM ? document.body : { appendChild() {} };
 
 function getParentElement(parentSelector) {
   return parentSelector();
@@ -133,8 +128,6 @@ export default class Modal extends Component {
   componentWillUnmount() {
     if (!this.node) return;
 
-    refCount.remove(this);
-
     const state = this.portal.state;
     const now = Date.now();
     const closesAt = state.isOpen && this.props.closeTimeoutMS
@@ -159,12 +152,6 @@ export default class Modal extends Component {
   }
 
   renderPortal = props => {
-    if (props.isOpen) {
-      refCount.add(this);
-    } else {
-      refCount.remove(this);
-    }
-
     this.portal = renderSubtreeIntoContainer(this, (
       <ModalPortal defaultStyles={Modal.defaultStyles} {...props} />
     ), this.node);

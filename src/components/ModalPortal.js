@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import { PropTypes } from 'prop-types';
 import * as focusManager from '../helpers/focusManager';
 import scopeTab from '../helpers/scopeTab';
+import * as ariaAppHider from '../helpers/ariaAppHider';
+import * as refCount from '../helpers/refCount';
+import { SafeHTMLElement } from '../helpers/appElement';
 
 // so that our CSS is statically analyzable
 const CLASS_NAMES = {
@@ -38,6 +41,9 @@ export default class ModalPortal extends Component {
       PropTypes.string,
       PropTypes.object
     ]),
+    bodyOpenClassName: PropTypes.string,
+    ariaHideApp: PropTypes.bool,
+    appElement: PropTypes.instanceOf(SafeHTMLElement),
     onAfterOpen: PropTypes.func,
     onRequestClose: PropTypes.func,
     closeTimeoutMS: PropTypes.number,
@@ -62,6 +68,7 @@ export default class ModalPortal extends Component {
     // Focus needs to be set when mounting and already open
     if (this.props.isOpen) {
       this.setFocusAfterRender(true);
+      this.addModalInstance();
       this.open();
     }
   }
@@ -70,8 +77,10 @@ export default class ModalPortal extends Component {
     // Focus only needs to be set once when the modal is being opened
     if (!this.props.isOpen && newProps.isOpen) {
       this.setFocusAfterRender(true);
+      this.addModalInstance();
       this.open();
     } else if (this.props.isOpen && !newProps.isOpen) {
+      this.removeModalInstance();
       this.close();
     }
   }
@@ -84,6 +93,7 @@ export default class ModalPortal extends Component {
   }
 
   componentWillUnmount() {
+    this.removeModalInstance();
     clearTimeout(this.closeTimer);
   }
 
@@ -97,6 +107,24 @@ export default class ModalPortal extends Component {
 
   setContentRef = (content) => {
     this.content = content;
+  }
+
+  addModalInstance() {
+    const { appElement, ariaHideApp, bodyOpenClassName } = this.props;
+    refCount.add(bodyOpenClassName);
+    // Add aria-hidden to appELement
+    if (ariaHideApp) {
+      ariaAppHider.hide(appElement);
+    }
+  }
+
+  removeModalInstance() {
+    const { appElement, ariaHideApp, bodyOpenClassName } = this.props;
+    refCount.remove(bodyOpenClassName);
+    // Reset aria-hidden attribute if all modals have been removed
+    if (ariaHideApp && refCount.totalCount() < 1) {
+      ariaAppHider.show(appElement);
+    }
   }
 
   afterClose = () => {
