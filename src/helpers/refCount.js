@@ -1,5 +1,3 @@
-import elementClass from 'element-class';
-
 const modals = {};
 
 export function add(bodyClass) {
@@ -8,17 +6,16 @@ export function add(bodyClass) {
     modals[bodyClass] = 0;
   }
   modals[bodyClass] += 1;
-  elementClass(document.body).add(bodyClass);
 }
 
 export function remove(bodyClass) {
   if (modals[bodyClass]) {
     modals[bodyClass] -= 1;
   }
-  // Remove class if no more modals are open
-  if (modals[bodyClass] === 0) {
-    elementClass(document.body).remove(bodyClass);
-  }
+}
+
+export function count(bodyClass) {
+  return modals[bodyClass];
 }
 
 export function totalCount() {
