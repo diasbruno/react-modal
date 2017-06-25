@@ -155,6 +155,9 @@ You can use this to remove scrolling on the the body while the modal is open.
 }
 ```
 
+This class name can be customized via `bodyOpenClassName`. This class must be constant
+and if updated, it will be considered a violation and an exception (log) will be thrown.
+
 ## Examples
 
 Inside an app:
