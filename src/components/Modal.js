@@ -98,16 +98,15 @@ export default class Modal extends Component {
     }
   };
 
+  node = document.createElement('div');
+
   componentDidMount() {
-    this.node = document.createElement('div');
     this.node.className = this.props.portalClassName;
 
     const parent = getParentElement(this.props.parentSelector);
     parent.appendChild(this.node);
 
-    if (useReactPortal) {
-      this.forceUpdate();
-    } else {
+    if (!useReactPortal) {
       this.renderPortal(this.props);
     }
   }
@@ -156,7 +155,7 @@ export default class Modal extends Component {
     }
   }
 
-  portalRef = (portal) => this.portal = portal;
+  portalRef = portal => this.portal = portal;
 
   removePortal = () => {
     if (!useReactPortal) {
@@ -167,18 +166,20 @@ export default class Modal extends Component {
   }
 
   renderPortal = props => {
-    this.portal = renderSubtreeIntoContainer(this, (
-      <ModalPortal defaultStyles={Modal.defaultStyles} {...props} />
-    ), this.node);
-  }
-
-  render() {
-    if (useReactPortal && this.node) {
+    if (useReactPortal) {
       return ReactDOM.createPortal(
         <ModalPortal defaultStyles={Modal.defaultStyles} ref={this.portalRef} {...this.props} />,
         this.node
       );
+    } else {
+      this.portal = renderSubtreeIntoContainer(this, (
+        <ModalPortal defaultStyles={Modal.defaultStyles} {...props} />
+      ), this.node);
+      return this.portal;
     }
-    return null;
+  }
+
+  render() {
+    return useReactPortal ? this.renderPortal(this.props) : null;
   }
 }
