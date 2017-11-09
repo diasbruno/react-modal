@@ -4,7 +4,7 @@ import should from "should";
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import Modal from "react-modal";
-import * as ariaAppHider from "react-modal/helpers/ariaAppHider";
+import * as ariaAppHider from "react-modal/helpers/aria_app_hider";
 import {
   isBodyWithReactModalOpenClass,
   contentAttribute,

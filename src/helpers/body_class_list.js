@@ -1,4 +1,4 @@
-import * as refCount from "./refCount";
+import * as refCount from "./ref_count";
 
 export function add(bodyClass) {
   // Increment class(es) on refCount tracker and add class(es) to body

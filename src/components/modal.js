@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
-import ModalPortal from "./ModalPortal";
-import * as ariaAppHider from "../helpers/ariaAppHider";
-import SafeHTMLElement, { canUseDOM } from "../helpers/safeHTMLElement";
+import ModalPortal from "./modal_portal";
+import * as ariaAppHider from "../helpers/aria_app_hider";
+import SafeHTMLElement, { canUseDOM } from "../helpers/safe_html_element";
 
 export const portalClassName = "ReactModalPortal";
 export const bodyOpenClassName = "ReactModal__Body--open";

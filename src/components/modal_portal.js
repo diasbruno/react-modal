@@ -1,11 +1,11 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import * as focusManager from "../helpers/focusManager";
-import scopeTab from "../helpers/scopeTab";
-import * as ariaAppHider from "../helpers/ariaAppHider";
-import * as refCount from "../helpers/refCount";
-import * as bodyClassList from "../helpers/bodyClassList";
-import SafeHTMLElement from "../helpers/safeHTMLElement";
+import * as focusManager from "../helpers/focus_manager";
+import scopeTab from "../helpers/scope_tab";
+import * as ariaAppHider from "../helpers/aria_app_hider";
+import * as refCount from "../helpers/ref_count";
+import * as bodyClassList from "../helpers/body_class_list";
+import SafeHTMLElement from "../helpers/safe_html_element";
 
 // so that our CSS is statically analyzable
 const CLASS_NAMES = {

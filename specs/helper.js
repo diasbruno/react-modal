@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import Modal, { bodyOpenClassName } from "../src/components/Modal";
+import Modal, { bodyOpenClassName } from "../src/components/modal";
 import TestUtils from "react-dom/test-utils";
 
 const divStack = [];
