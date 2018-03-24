@@ -1,5 +1,6 @@
 /* eslint-env mocha */
 import "should";
+import buildClassNames, { CLASS_NAMES } from "../src/helpers/classNames";
 import tabbable from "../src/helpers/tabbable";
 import "sinon";
 
@@ -104,6 +105,157 @@ export default () => {
         elem.style.overflow = "visible";
         elem.appendChild(input);
         tabbable(elem).should.containEql(input);
+      });
+    });
+  });
+
+  describe("buildClassNames", () => {
+    const dc = CLASS_NAMES.content;
+    const dov = CLASS_NAMES.overlay;
+
+    context("default names", () => {
+      context("when idle.", () => {
+        it("no className. - using default names", () => {
+          buildClassNames(0, "content").should.be.equal(dc);
+        });
+
+        it("no overlayClassName - using default name.", () => {
+          buildClassNames(0, "overlay").should.be.equal(dov);
+        });
+
+        it("className empty string - using default name.", () => {
+          buildClassNames(0, "content", "").should.be.equal(dc);
+        });
+
+        it("overlayClassName empty string - using default name.", () => {
+          buildClassNames(0, "overlay", "").should.be.equal(dov);
+        });
+
+        it("className as string.", () => {
+          buildClassNames(0, "content", "test").should.be.equal(dc);
+        });
+
+        it("overlayClassName as string.", () => {
+          buildClassNames(0, "overlay", "test").should.be.equal(dov);
+        });
+      });
+
+      context("after open.", () => {
+        it("no className.", () => {
+          buildClassNames(1, "content", "").should.be.equal(
+            `${dc} ${dc}--after-open`
+          );
+        });
+
+        it("no overlayClassName.", () => {
+          buildClassNames(1, "overlay", "").should.be.equal(
+            `${dov} ${dov}--after-open`
+          );
+        });
+
+        it("className as string.", () => {
+          buildClassNames(1, "content", "test").should.be.equal(
+            `${dc} ${dc}--after-open test`
+          );
+        });
+
+        it("overlayClassName as string.", () => {
+          buildClassNames(1, "overlay", "test").should.be.equal(
+            `${dov} ${dov}--after-open test`
+          );
+        });
+      });
+
+      context("before close.", () => {
+        it("no className.", () => {
+          buildClassNames(2, "content", "").should.be.equal(
+            `${dc} ${dc}--before-close`
+          );
+        });
+
+        it("no overlayClassName.", () => {
+          buildClassNames(2, "overlay", "").should.be.equal(
+            `${dov} ${dov}--before-close`
+          );
+        });
+
+        it("className as string.", () => {
+          buildClassNames(2, "content", "test").should.be.equal(
+            `${dc} ${dc}--before-close test`
+          );
+        });
+
+        it("overlayClassName as string.", () => {
+          buildClassNames(2, "overlay", "test").should.be.equal(
+            `${dov} ${dov}--before-close test`
+          );
+        });
+      });
+    });
+
+    context("classes as objects", () => {
+      const buildObject = (base, afterOpen, beforeClose) => ({ base, afterOpen, beforeClose });
+
+      context("when idle.", () => {
+        it("className.", () => {
+          buildClassNames(0, "content", buildObject("A", "B", "C")).should.be.equal("A");
+        });
+
+        it("overlayClassName.", () => {
+          buildClassNames(0, "overlay", buildObject("A", "B", "C")).should.be.equal("A");
+        });
+
+        it("className should merge with default names.", () => {
+          buildClassNames(0, "content", {}).should.be.equal(dc);
+        });
+
+        it("overlayClassName should merge with default names.", () => {
+          buildClassNames(0, "overlay", {}).should.be.equal(dov);
+        });
+      });
+
+      context("after open.", () => {
+        it("className.", () => {
+          buildClassNames(1, "content", buildObject("A", "B", "C")).should.be.equal("A B");
+        });
+
+        it("overlayClassName.", () => {
+          buildClassNames(1, "overlay", buildObject("A", "B", "C")).should.be.equal("A B");
+        });
+
+        it("className should merge with default names.", () => {
+          buildClassNames(1, "content", {}).should.be.equal(
+            `${dc} ${dc}--after-open`
+          );
+        });
+
+        it("overlayClassName should merge with default names.", () => {
+          buildClassNames(1, "overlay", {}).should.be.equal(
+            `${dov} ${dov}--after-open`
+          );
+        });
+      });
+
+      context("before close.", () => {
+        it("className.", () => {
+          buildClassNames(2, "content", buildObject("A", "B", "C")).should.be.equal("A C");
+        });
+
+        it("overlayClassName.", () => {
+          buildClassNames(2, "overlay", buildObject("A", "B", "C")).should.be.equal("A C");
+        });
+
+        it("className should merge with default names.", () => {
+          buildClassNames(2, "content", {}).should.be.equal(
+            `${dc} ${dc}--before-close`
+          );
+        });
+
+        it("overlayClassName should merge with default names.", () => {
+          buildClassNames(2, "overlay", {}).should.be.equal(
+            `${dov} ${dov}--before-close`
+          );
+        });
       });
     });
   });
