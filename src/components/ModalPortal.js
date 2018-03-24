@@ -5,12 +5,7 @@ import scopeTab from "../helpers/scopeTab";
 import * as ariaAppHider from "../helpers/ariaAppHider";
 import * as classList from "../helpers/classList";
 import SafeHTMLElement from "../helpers/safeHTMLElement";
-
-// so that our CSS is statically analyzable
-const CLASS_NAMES = {
-  overlay: "ReactModal__Overlay",
-  content: "ReactModal__Content"
-};
+import buildClassNames from "../helpers/classNames";
 
 const TAB_KEY = 9;
 const ESC_KEY = 27;
@@ -309,27 +304,6 @@ export default class ModalPortal extends Component {
     document.activeElement === this.content ||
     this.content.contains(document.activeElement);
 
-  buildClassName = (which, additional) => {
-    const classNames =
-      typeof additional === "object"
-        ? additional
-        : {
-            base: CLASS_NAMES[which],
-            afterOpen: `${CLASS_NAMES[which]}--after-open`,
-            beforeClose: `${CLASS_NAMES[which]}--before-close`
-          };
-    let className = classNames.base;
-    if (this.state.afterOpen) {
-      className = `${className} ${classNames.afterOpen}`;
-    }
-    if (this.state.beforeClose) {
-      className = `${className} ${classNames.beforeClose}`;
-    }
-    return typeof additional === "string" && additional
-      ? `${className} ${additional}`
-      : className;
-  };
-
   ariaAttributes = items =>
     Object.keys(items).reduce((acc, name) => {
       acc[`aria-${name}`] = items[name];
@@ -341,10 +315,12 @@ export default class ModalPortal extends Component {
     const contentStyles = className ? {} : defaultStyles.content;
     const overlayStyles = overlayClassName ? {} : defaultStyles.overlay;
 
+    const phase = this.state.isOpen && this.state.beforeClose ? 2 : (this.state.afterOpen ? 1 : 0);
+
     return this.shouldBeClosed() ? null : (
       <div
         ref={this.setOverlayRef}
-        className={this.buildClassName("overlay", overlayClassName)}
+        className={buildClassNames(phase, "overlay", overlayClassName)}
         style={{ ...overlayStyles, ...this.props.style.overlay }}
         onClick={this.handleOverlayOnClick}
         onMouseDown={this.handleOverlayOnMouseDown}
@@ -354,7 +330,7 @@ export default class ModalPortal extends Component {
         <div
           ref={this.setContentRef}
           style={{ ...contentStyles, ...this.props.style.content }}
-          className={this.buildClassName("content", className)}
+          className={buildClassNames(phase, "content", className)}
           tabIndex="-1"
           onKeyDown={this.handleKeyDown}
           onMouseDown={this.handleContentOnMouseDown}
