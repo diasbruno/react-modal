@@ -73,7 +73,7 @@ class SimpleUsage extends Component {
             labelledby: "heading",
             describedby: "fulldescription"
           }}
-          closeTimeoutMS={150}
+          closeTimeoutMS={1500}
           contentLabel="modalB"
           isOpen={currentModal == MODAL_B}
           shouldCloseOnOverlayClick={false}

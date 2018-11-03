@@ -1,5 +1,38 @@
+// so that our CSS is statically analyzable
+const CLASS_NAMES = {
+  overlay: "ReactModal__Overlay",
+  content: "ReactModal__Content"
+};
+
 const htmlClassList = {};
 const docBodyClassList = {};
+
+export const manageClassNames = (action, props) => {
+  if (props.htmlOpenClassName) {
+    const html = document.getElementsByTagName("html")[0];
+    html.classList[action](props.htmlOpenClassName);
+  }
+  document.body.classList[action](props.bodyOpenClassName);
+};
+
+export const buildClassName = (which, definition, props) => {
+  const classNames = typeof definition === "object" ?
+        definition : {
+          base: CLASS_NAMES[which],
+          afterOpen: `${CLASS_NAMES[which]}--after-open`,
+          beforeClose: `${CLASS_NAMES[which]}--before-close`
+        };
+  let className = classNames.base;
+  if (props.renderState >= 2) {
+    className = `${className} ${classNames.afterOpen}`;
+  }
+  if (props.renderState == 3) {
+    className = `${className} ${classNames.beforeClose}`;
+  }
+  return definition && typeof definition === "string"
+    ? `${className} ${definition}`
+    : className;
+};
 
 export function dumpClassLists() {
   if (process.env.NODE_ENV !== "production") {

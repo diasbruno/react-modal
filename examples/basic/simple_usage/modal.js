@@ -11,7 +11,7 @@ export default props => {
     <Modal
       id="test"
       contentLabel="modalA"
-      closeTimeoutMS={150}
+      closeTimeoutMS={1500}
       isOpen={isOpen}
       onAfterOpen={onAfterOpen}
       onRequestClose={onRequestClose}>

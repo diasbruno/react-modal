@@ -2,328 +2,217 @@
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
-import ModalPortal from "./ModalPortal";
+import { polyfill } from "react-lifecycles-compat";
 import * as ariaAppHider from "../helpers/ariaAppHider";
 import * as classList from "../helpers/classList";
-import SafeHTMLElement, { canUseDOM } from "../helpers/safeHTMLElement";
+import ModalPortal from "./ModalPortal";
+import SafeHTMLElement, {
+  isReact16, canUseDOM
+} from "../helpers/safeHTMLElement";
 
-import { polyfill } from "react-lifecycles-compat";
+console.log("Rendering with react 16+", isReact16);
+
+const CLOSED = 0;
+const WILL_OPEN = 1;
+const OPEN = 2;
+const WILL_CLOSE = 3;
+
+function renderStateStr(state) {
+  switch (state) {
+  case WILL_CLOSE: return "WILL_CLOSE";
+  case CLOSED: return "CLOSED";
+  default: return "OPEN";
+  }
+}
+
+let ariaHiddenInstances = 0;
 
 export const portalClassName = "ReactModalPortal";
 export const bodyOpenClassName = "ReactModal__Body--open";
 
-const isReact16 = ReactDOM.createPortal !== undefined;
-
-let ariaHiddenInstances = 0;
+export const defaultParentSelector = () => document.body;
 
 const getCreatePortal = () =>
   isReact16
     ? ReactDOM.createPortal
     : ReactDOM.unstable_renderSubtreeIntoContainer;
 
-class EventTimer {
-  timer = null;
+const TAB_KEY = 9;
+const ESC_KEY = 27;
 
-  start = (duration, onTimeout) => (
-    this.timer = setTimeout(
-      () => {
-        onTimeout();
-        this.stop();
-      },
-      duration
-    )
-  );
-
-  stop = () => clearTimeout(this.timer);
-
-  reset = (duration, onTimeout) => {
-    this.stop();
-    this.state(duration, onTimeout);
-  }
-}
-
-const WILL_OPEN = 0;
-const OPENED = 1;
-const WILL_CLOSE = 2;
-const CLOSED = 3;
+import scopeTab from "../helpers/scopeTab";
 
 class Modal extends Component {
-  /* eslint-disable react/no-unused-prop-types */
-  static propTypes = {
-    isOpen: PropTypes.bool.isRequired,
-    style: PropTypes.shape({
-      content: PropTypes.object,
-      overlay: PropTypes.object
-    }),
-    portalClassName: PropTypes.string,
-    bodyOpenClassName: PropTypes.string,
-    htmlOpenClassName: PropTypes.string,
-    className: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.shape({
-        base: PropTypes.string.isRequired,
-        afterOpen: PropTypes.string.isRequired,
-        beforeClose: PropTypes.string.isRequired
-      })
-    ]),
-    overlayClassName: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.shape({
-        base: PropTypes.string.isRequired,
-        afterOpen: PropTypes.string.isRequired,
-        beforeClose: PropTypes.string.isRequired
-      })
-    ]),
-    appElement: PropTypes.instanceOf(SafeHTMLElement),
-    onAfterOpen: PropTypes.func,
-    onRequestClose: PropTypes.func,
-    closeTimeoutMS: PropTypes.number,
-    ariaHideApp: PropTypes.bool,
-    shouldFocusAfterRender: PropTypes.bool,
-    shouldCloseOnOverlayClick: PropTypes.bool,
-    shouldReturnFocusAfterClose: PropTypes.bool,
-    parentSelector: PropTypes.func,
-    aria: PropTypes.object,
-    data: PropTypes.object,
-    role: PropTypes.string,
-    contentLabel: PropTypes.string,
-    shouldCloseOnEsc: PropTypes.bool,
-    overlayRef: PropTypes.func,
-    contentRef: PropTypes.func
-  };
-  /* eslint-enable react/no-unused-prop-types */
-
   static defaultProps = {
     isOpen: false,
-    portalClassName,
+    style: {
+      overlay: {},
+      content: {}
+    },
+    parentSelector: defaultParentSelector,
     bodyOpenClassName,
-    role: "dialog",
+    portalClassName,
     ariaHideApp: true,
     closeTimeoutMS: 0,
     shouldFocusAfterRender: true,
-    shouldCloseOnEsc: true,
     shouldCloseOnOverlayClick: true,
-    shouldReturnFocusAfterClose: true,
-    parentSelector: () => document.body
+    shouldCloseOnEsc: false
   };
 
-  static defaultStyles = {
-    overlay: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(255, 255, 255, 0.75)"
-    },
-    content: {
-      position: "absolute",
-      top: "40px",
-      left: "40px",
-      right: "40px",
-      bottom: "40px",
-      border: "1px solid #ccc",
-      background: "#fff",
-      overflow: "auto",
-      WebkitOverflowScrolling: "touch",
-      borderRadius: "4px",
-      outline: "none",
-      padding: "20px"
-    }
-  };
+  static setAppElement = () => document.body;
 
-  // proxy
-  static setAppElement = ariaAppHider.setElement;
+  state = { renderState: CLOSED };
 
-  state = { action: CLOSED };
+  getSnapshotBeforeUpdate(pp, ps) {
+    console.log("sbu", pp, ps, this.props);
+    const {
+      portalClassName, parentSelector
+    } = this.props;
 
-  constructor(props) {
-    super(props);
-    this.state.action = props.isOpen ? WILL_OPEN : CLOSED;
-    this.timer = new EventTimer();
-  }
-
-  componentDidMount() {
-    if (!canUseDOM) return;
-
-    const { portalClassName, parentSelector } = this.props;
-
-    if (!isReact16) {
-      this.node = document.createElement("div");
-    }
-    this.node.className = portalClassName;
-
-    const parent = parentSelector();
-    parent.appendChild(this.node);
-
-    if (this.props.isOpen) {
-      this.beforeOpen();
-      this.setState(
-        { state: OPENED },
-        () => {
-          !isReact16 && this.renderPortal(this.props);
-        }
-      );
-    }
-  }
-
-  getSnapshotBeforeUpdate(prevProps) {
     return {
-      prevParent: prevProps.parentSelector(),
-      nextParent: this.props.parentSelector()
+      updatePortalClassName: pp.portalClassName != portalClassName,
+      prevParent: pp.parentSelector(),
+      nextParent: parentSelector()
     };
   }
 
-  componentDidUpdate(prevProps, _, snapshot) {
-    if (!canUseDOM) return;
+  componentDidMount = () => {
+    this.node = document.createElement('div');
 
+    const parent = this.props.parentSelector();
+    parent.appendChild(this.node);
+
+    this.node.className = this.props.portalClassName;
+    this.props.isOpen && this.open();
+  }
+
+  componentDidUpdate(prevProps, _, snapshot) {
     const { isOpen, portalClassName } = this.props;
 
-    if (prevProps.portalClassName !== portalClassName) {
+    if (snapshot.updatePortalClassName) {
       this.node.className = portalClassName;
     }
 
-    const { prevParent, nextParent } = snapshot;
-    if (nextParent !== prevParent) {
-      prevParent.removeChild(this.node);
-      nextParent.appendChild(this.node);
-    }
-
-    // Stop unnecessary renders if modal is remaining closed
-    (!prevProps.isOpen && !isOpen) && this.renderPortal(this.props);
-
-    if (!prevProps.isOpen && this.props.isOpen) {
-      this.open();
-    } else if (prevProps.isOpen && !this.props.isOpen) {
-      this.close();
-    }
+    (!prevProps.isOpen && isOpen) && this.open();
+    (prevProps.isOpen && !isOpen) && this.close();
   }
 
-  open = () => {
-    this.beforeOpen();
-  };
+  componentWillUnmount = () => {
+    classList.manageClassNames('remove', this.props);
+    this.removePortal();
+  }
 
-  close = () => {
-    console.log("closing");
-    this.setState({ state: WILL_CLOSE }, () => {
-      if (!canUseDOM || !this.node || !this.portal) return;
+  open = () => this.updateProxy({
+    renderState: WILL_OPEN
+  }, () => {
+    classList.manageClassNames('add', this.props);
+    this.updateProxy({ renderState: OPEN });
+  });
 
-      const { closeTimeoutMS } = this.props;
-      const { state, isOpen, closesAt } = this.portal.state;
-      const now = Date.now();
+  close = () => this.updateProxy({
+    renderState: WILL_CLOSE
+  }, () => setTimeout(
+    () => this.updateProxy(
+      { renderState: CLOSED },
+      () => classList.manageClassNames('remove', this.props)
+    ),
+    this.props.closeTimeoutMS
+  ));
 
-      if (this.props.isOpen && this.props.closeTimeoutMS) {
-
-        const shouldClosesAt = closeTimeoutMS &&
-              (closesAt || now + closeTimeoutMS) || null;
-        this.setState(
-          { state: WILL_CLOSE },
-          () => this.timer.start(shouldClosesAt, () => {
-            this.removePortal();
-          })
-        );
-      } else {
-        this.removePortal();
-      }
-    });
-  };
-
-  beforeOpen = () => {
-    const {
-      appElement,
-      ariaHideApp,
-      htmlOpenClassName,
-      bodyOpenClassName
-    } = this.props;
-
-    // Remove classes.
-    classList.add(document.body, bodyOpenClassName);
-
-    htmlOpenClassName &&
-      classList.add(
-        document.getElementsByTagName("html")[0],
-        htmlOpenClassName
-      );
-
-    if (this.props.ariaHideApp) {
-      ariaHiddenInstances += 1;
-      ariaAppHider.hide(this.props.appElement);
-    }
-  };
-
-  afterClose = () => {
-    const {
-      appElement,
-      ariaHideApp,
-      htmlOpenClassName,
-      bodyOpenClassName
-    } = this.props;
-
-    // Remove classes.
-    classList.remove(document.body, bodyOpenClassName);
-
-    htmlOpenClassName &&
-      classList.remove(
-        document.getElementsByTagName("html")[0],
-        htmlOpenClassName
-      );
-
-    // Reset aria-hidden attribute if all modals have been removed
-    if (ariaHideApp && ariaHiddenInstances > 0) {
-      ariaHiddenInstances -= 1;
-
-      if (ariaHiddenInstances === 0) {
-        ariaAppHider.show(appElement);
-      }
-    }
-  };
-
-  removePortal = () => {
-    console.log("removing portal");
-    this.afterClose();
-    !isReact16 && ReactDOM.unmountComponentAtNode(this.node);
-    const parent = this.props.parentSelector();
-    parent.removeChild(this.node);
-    this.afterClose();
-  };
+  updateProxy = (state, cb) => {
+    console.log("Updating", state, cb);
+    this.setState(state, cb || (() => {}));
+  }
 
   portalRef = ref => (this.portal = ref);
 
-  renderPortal = props => {
-    const createPortal = getCreatePortal();
-    const portal = createPortal(
-      this,
-      this.state.shouldRender == CLOSED ? null : (
-        <ModalPortal defaultStyles={Modal.defaultStyles}
-                     shouldRender={this.state.action}
-                     {...props} />
-      ),
-      this.node
-    );
-    this.portalRef(portal);
+  overlayRef = ref => {
+    this.overlay = ref;
+    this.props.overlayRef && this.props.overlayRef(ref);
+  }
+
+  contentRef = ref => {
+    this.content = ref;
+    this.props.contentRef && this.props.contentRef(ref);
+  }
+
+  renderPortal = () => {}
+
+  removePortal = () => {
+    const parent = this.props.parentSelector();
+    parent.removeChild(this.node);
+  }
+
+  focusContent = () => {};
+
+  handleKeyDown = event => {
+    if (event.keyCode === TAB_KEY) {
+      scopeTab(this.content, event);
+    }
+
+    if (this.props.shouldCloseOnEsc &&
+        event.keyCode === ESC_KEY) {
+      event.stopPropagation();
+      this.props.onRequestClose(event);
+    }
   };
 
+  handleOverlayOnClick = event => {
+    if (this.props.shouldCloseOnOverlayClick) {
+      if (this.props.onRequestClose) {
+        this.props.onRequestClose(event);
+      } else {
+        this.focusContent();
+      }
+    }
+    this.currentTarget = null;
+  };
+
+  handleOverlayOnMouseDown = event => {
+    this.currentTarget = event.target;
+
+    (!this.props.shouldCloseOnOverlayClick &&
+     event.target == this.currentTarget
+    ) && event.preventDefault();
+  }
+
+  handleContentOnMouseDown = () => (this.currentTarget = null);
+
+  handleContentOnMouseUp = () => (this.currentTarget = null);
+
+  handleContentOnClick = () => (this.currentTarget = null);
+
   render() {
-    if (!canUseDOM || !isReact16) {
+    console.log("rendering", this.props.id);
+    if (!this.node) {
       return null;
     }
+    const props = {
+      renderState: this.state.renderState,
+      contentRef: this.contentRef,
+      overlayRef: this.overlayRef,
+      ...this.props
+    };
 
-    if (!this.node && isReact16) {
-      this.node = document.createElement("div");
+    if (isReact16) {
+      props.ref = this.portalRef;
     }
 
-    const createPortal = getCreatePortal();
-    return createPortal(
-      this.state.shouldRender == CLOSED ?
-        null : (
-          <ModalPortal ref={this.portalRef}
-                       defaultStyles={Modal.defaultStyles}
-                       shouldRender={this.state.action}
-                       {...this.props}
-                       />
-        ),
-      this.node
-    );
+    let portalArgs = [(
+      <ModalPortal {...props}
+                   handleKeyDown={this.handleKeyDown}
+                   handleContentOnClick={this.handleContentOnClick}
+                   handleContentOnMouseDown={this.handleContentOnMouseDown}
+                   handleContentOnMouseUp={this.handleContentOnMouseUp}
+                   handleOverlayOnClick={this.handleOverlayOnClick}
+                   handleOverlayOnMouseDown={this.handleOverlayOnMouseDown} />
+    ), this.node];
+
+    !isReact16 && portalArgs.unshift(this);
+
+    const portal = getCreatePortal().apply(null, portalArgs);
+
+    return isReact16 ? portal : null;
   }
 }
 

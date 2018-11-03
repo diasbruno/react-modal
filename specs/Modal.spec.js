@@ -1,9 +1,11 @@
+/* global setTimeout, afterEach, context, xit, it */
 /* eslint-env mocha */
 import should from "should";
 import React, { Component } from "react";
 import ReactDOM from "react-dom";
-import Modal from "react-modal";
+import Modal, { defaultParentSelector } from "react-modal";
 import * as ariaAppHider from "react-modal/helpers/ariaAppHider";
+
 import {
   isBodyWithReactModalOpenClass,
   isHtmlWithReactModalOpenClass,
@@ -18,31 +20,10 @@ import {
 } from "./helper";
 
 export default () => {
-  afterEach("cleaned up all rendered modals", emptyDOM);
+  afterEach("GC all rendered modals", emptyDOM);
 
-  it("scopes tab navigation to the modal");
-  it("focuses the last focused element when tabbing in from browser chrome");
-  it("renders children [tested indirectly]");
-
-  it("can be open initially", () => {
-    const modal = renderModal({ isOpen: true }, "hello");
-    mcontent(modal).should.be.ok();
-  });
-
-  it("can be closed initially", () => {
-    const modal = renderModal({}, "hello");
-    should(ReactDOM.findDOMNode(modal.portal)).not.be.ok();
-  });
-
-  it("doesn't render the portal if modal is closed", () => {
-    const modal = renderModal({}, "hello");
-    should(ReactDOM.findDOMNode(modal.portal)).not.be.ok();
-  });
-
-  it("has default props", () => {
+  xit("check default properties.", () => {
     const node = document.createElement("div");
-    Modal.setAppElement(document.createElement("div"));
-    // eslint-disable-next-line react/no-render-return-value
     const modal = ReactDOM.render(<Modal />, node);
     const props = modal.props;
     props.isOpen.should.not.be.ok();
@@ -52,549 +33,43 @@ export default () => {
     props.shouldCloseOnOverlayClick.should.be.ok();
     ReactDOM.unmountComponentAtNode(node);
     ariaAppHider.resetForTesting();
-    Modal.setAppElement(document.body); // restore default
   });
 
-  it("accepts appElement as a prop", () => {
-    const el = document.createElement("div");
-    const node = document.createElement("div");
-    ReactDOM.render(<Modal isOpen={true} appElement={el} />, node);
-    (el.getAttribute("aria-hidden") || false).should.be.eql("true");
-    ReactDOM.unmountComponentAtNode(node);
+  xit("can be closed initially.", () => {
+    const m = renderModal({});
+    should(m.portal).not.be.ok();
   });
 
-  it("renders into the body, not in context", () => {
-    const node = document.createElement("div");
-    class App extends Component {
-      render() {
-        return (
-          <div>
-            <Modal isOpen>
-              <span>hello</span>
-            </Modal>
-          </div>
-        );
-      }
-    }
-    Modal.setAppElement(node);
-    ReactDOM.render(<App />, node);
-    document.body
-      .querySelector(".ReactModalPortal")
-      .parentNode.should.be.eql(document.body);
-    ReactDOM.unmountComponentAtNode(node);
+  xit("can be open initially.", () => {
+    const m = renderModal({ isOpen: true });
+    should(m.portal).should.be.ok();
   });
 
-  it("allow setting appElement of type string", () => {
-    const node = document.createElement("div");
-    class App extends Component {
-      render() {
-        return (
-          <div>
-            <Modal isOpen>
-              <span>hello</span>
-            </Modal>
-          </div>
-        );
-      }
-    }
-    const appElement = "body";
-    Modal.setAppElement(appElement);
-    ReactDOM.render(<App />, node);
-    document.body
-      .querySelector(".ReactModalPortal")
-      .parentNode.should.be.eql(document.body);
-    ReactDOM.unmountComponentAtNode(node);
-  });
-
-  it("default parentSelector should be document.body.", () => {
-    const modal = renderModal({ isOpen: true });
-    modal.props.parentSelector().should.be.eql(document.body);
-  });
-
-  it("renders the modal content with a dialog aria role when provided ", () => {
-    const child = "I am a child of Modal, and he has sent me here...";
-    const modal = renderModal({ isOpen: true, role: "dialog" }, child);
-    contentAttribute(modal, "role").should.be.eql("dialog");
-  });
-
-  // eslint-disable-next-line max-len
-  it("renders the modal content with the default aria role when not provided", () => {
-    const child = "I am a child of Modal, and he has sent me here...";
-    const modal = renderModal({ isOpen: true }, child);
-    contentAttribute(modal, "role").should.be.eql("dialog");
-  });
-
-  it("does not render the aria role when provided role with null", () => {
-    const child = "I am a child of Modal, and he has sent me here...";
-    const modal = renderModal({ isOpen: true, role: null }, child);
-    should(contentAttribute(modal, "role")).be.eql(null);
-  });
-
-  it("sets aria-label based on the contentLabel prop", () => {
-    const child = "I am a child of Modal, and he has sent me here...";
-    const modal = renderModal(
-      {
-        isOpen: true,
-        contentLabel: "Special Modal"
-      },
-      child
-    );
-
-    contentAttribute(modal, "aria-label").should.be.eql("Special Modal");
-  });
-
-  it("removes the portal node", () => {
-    const modal = renderModal({ isOpen: true }, "hello");
-    modal.close();
+  xit("removes the portal node.", () => {
+    renderModal({ isOpen: true });
+    unmountModal();
     should(
       document.querySelector(".ReactModalPortal")
     ).not.be.ok();
   });
 
-  it("removes the portal node after closeTimeoutMS", done => {
-    const closeTimeoutMS = 100;
-    renderModal({ isOpen: true, closeTimeoutMS }, "hello");
-
+  xit("removes the portal node after closeTimeoutMS.", done => {
     function checkDOM(count) {
       const portal = document.querySelectorAll(".ReactModalPortal");
       portal.length.should.be.eql(count);
     }
 
-    unmountModal();
+    emptyDOM();
 
-    // content is still mounted after modal is gone
-    checkDOM(1);
+    checkDOM(0);
 
-    setTimeout(() => {
-      // content is unmounted after specified timeout
-      checkDOM(0);
-      done();
-    }, closeTimeoutMS);
-  });
-
-  it("focuses the modal content by default", () => {
-    const modal = renderModal({ isOpen: true }, null);
-    document.activeElement.should.be.eql(mcontent(modal));
-  });
-
-  it("does not focus modal content if shouldFocusAfterRender is false", () => {
-    const modal = renderModal(
-      { isOpen: true, shouldFocusAfterRender: false },
-      null
-    );
-    document.activeElement.should.not.be.eql(mcontent(modal));
-  });
-
-  it("give back focus to previous element or modal.", done => {
-    function cleanup() {
-      unmountModal();
-      done();
-    }
-    const modalA = renderModal(
-      {
-        isOpen: true,
-        className: "modal-a",
-        onRequestClose: cleanup
-      },
-      null
-    );
-
-    const modalContent = mcontent(modalA);
-    document.activeElement.should.be.eql(modalContent);
-
-    const modalB = renderModal(
-      {
-        isOpen: true,
-        className: "modal-b",
-        onRequestClose() {
-          const modalContent = mcontent(modalB);
-          document.activeElement.should.be.eql(mcontent(modalA));
-          escKeyDown(modalContent);
-          document.activeElement.should.be.eql(modalContent);
-        }
-      },
-      null
-    );
-
-    escKeyDown(modalContent);
-  });
-
-  xit("does not steel focus when a descendent is already focused", () => {
-    let content;
-    const input = (
-      <input
-        ref={el => {
-          el && el.focus();
-          content = el;
-        }}
-      />
-    );
-    renderModal({ isOpen: true }, input, () => {
-      document.activeElement.should.be.eql(content);
-    });
-  });
-
-  it("supports portalClassName", () => {
-    const modal = renderModal({
-      isOpen: true,
-      portalClassName: "myPortalClass"
-    });
-    modal.node.className.includes("myPortalClass").should.be.ok();
-  });
-
-  it("supports custom className", () => {
-    const modal = renderModal({ isOpen: true, className: "myClass" });
-    mcontent(modal)
-      .className.includes("myClass")
-      .should.be.ok();
-  });
-
-  it("supports overlayClassName", () => {
-    const modal = renderModal({
-      isOpen: true,
-      overlayClassName: "myOverlayClass"
-    });
-    moverlay(modal)
-      .className.includes("myOverlayClass")
-      .should.be.ok();
-  });
-
-  it("overrides content classes with custom object className", () => {
-    const modal = renderModal({
-      isOpen: true,
-      className: {
-        base: "myClass",
-        afterOpen: "myClass_after-open",
-        beforeClose: "myClass_before-close"
-      }
-    });
-    mcontent(modal).className.should.be.eql("myClass myClass_after-open");
-    unmountModal();
-  });
-
-  it("overrides overlay classes with custom object overlayClassName", () => {
-    const modal = renderModal({
-      isOpen: true,
-      overlayClassName: {
-        base: "myOverlayClass",
-        afterOpen: "myOverlayClass_after-open",
-        beforeClose: "myOverlayClass_before-close"
-      }
-    });
-    moverlay(modal).className.should.be.eql(
-      "myOverlayClass myOverlayClass_after-open"
-    );
-    unmountModal();
-  });
-
-  it("supports overriding react modal open class in document.body.", () => {
-    renderModal({ isOpen: true, bodyOpenClassName: "custom-modal-open" });
-    (document.body.className.indexOf("custom-modal-open") > -1).should.be.ok();
-  });
-
-  it("supports setting react modal open class in <html />.", () => {
-    renderModal({ isOpen: true, htmlOpenClassName: "custom-modal-open" });
-    isHtmlWithReactModalOpenClass("custom-modal-open").should.be.ok();
-  });
-
-  // eslint-disable-next-line max-len
-  it("don't append class to document.body if modal is closed.", () => {
-    renderModal({ isOpen: false });
-    isBodyWithReactModalOpenClass().should.not.be.ok();
-  });
-
-  it("don't append class to <html /> if modal is closed.", () => {
-    renderModal({ isOpen: false, htmlOpenClassName: "custom-modal-open" });
-    isHtmlWithReactModalOpenClass().should.not.be.ok();
-  });
-
-  it("append class to document.body if modal is open.", () => {
-    renderModal({ isOpen: true });
-    isBodyWithReactModalOpenClass().should.be.ok();
-  });
-
-  it("don't append class to <html /> if not defined.", () => {
-    renderModal({ isOpen: true });
-    htmlClassList().should.be.empty();
-  });
-
-  // eslint-disable-next-line max-len
-  it("removes class from document.body when unmounted without closing", () => {
-    renderModal({ isOpen: true });
-    unmountModal();
-    isBodyWithReactModalOpenClass().should.not.be.ok();
-  });
-
-  it("remove class from document.body when no modals opened", () => {
-    renderModal({ isOpen: true });
-    renderModal({ isOpen: true });
-    isBodyWithReactModalOpenClass().should.be.ok();
-    unmountModal();
-    isBodyWithReactModalOpenClass().should.be.ok();
-    unmountModal();
-    isBodyWithReactModalOpenClass().should.not.be.ok();
-    isHtmlWithReactModalOpenClass().should.not.be.ok();
-  });
-
-  it("supports adding/removing multiple document.body classes", () => {
-    renderModal({
-      isOpen: true,
-      bodyOpenClassName: "A B C"
-    });
-    document.body.classList.contains("A", "B", "C").should.be.ok();
-    unmountModal();
-    document.body.classList.contains("A", "B", "C").should.not.be.ok();
-  });
-
-  it("does not remove shared classes if more than one modal is open", () => {
-    renderModal({
-      isOpen: true,
-      bodyOpenClassName: "A"
-    });
-    renderModal({
-      isOpen: true,
-      bodyOpenClassName: "A B"
-    });
-
-    isBodyWithReactModalOpenClass("A B").should.be.ok();
-    unmountModal();
-    isBodyWithReactModalOpenClass("A B").should.not.be.ok();
-    isBodyWithReactModalOpenClass("A").should.be.ok();
-    unmountModal();
-    isBodyWithReactModalOpenClass("A").should.not.be.ok();
-  });
-
-  it("should not add classes to document.body for unopened modals", () => {
-    renderModal({ isOpen: true });
-    isBodyWithReactModalOpenClass().should.be.ok();
-    renderModal({ isOpen: false, bodyOpenClassName: "testBodyClass" });
-    isBodyWithReactModalOpenClass("testBodyClass").should.not.be.ok();
-  });
-
-  it("should not remove classes from document.body if modal is closed", () => {
-    renderModal({ isOpen: true });
-    isBodyWithReactModalOpenClass().should.be.ok();
-    renderModal({ isOpen: false, bodyOpenClassName: "testBodyClass" });
-    renderModal({ isOpen: false });
-    isBodyWithReactModalOpenClass("testBodyClass").should.not.be.ok();
-    isBodyWithReactModalOpenClass().should.be.ok();
-    renderModal({ isOpen: false });
-    renderModal({ isOpen: false });
-    isBodyWithReactModalOpenClass().should.be.ok();
-  });
-
-  it("should not remove classes from <html /> if modal is closed", () => {
-    const modalA = renderModal({ isOpen: false });
-    isHtmlWithReactModalOpenClass().should.not.be.ok();
-    const modalB = renderModal({
-      isOpen: true,
-      htmlOpenClassName: "testHtmlClass"
-    });
-    modalA.portal.close();
-    isHtmlWithReactModalOpenClass("testHtmlClass").should.be.ok();
-    modalB.portal.close();
-    isHtmlWithReactModalOpenClass().should.not.be.ok();
-    renderModal({ isOpen: false });
-  });
-
-  it("additional aria attributes", () => {
-    const modal = renderModal(
-      { isOpen: true, aria: { labelledby: "a" } },
-      "hello"
-    );
-    mcontent(modal)
-      .getAttribute("aria-labelledby")
-      .should.be.eql("a");
-    unmountModal();
-  });
-
-  it("additional data attributes", () => {
-    const modal = renderModal(
-      { isOpen: true, data: { background: "green" } },
-      "hello"
-    );
-    mcontent(modal)
-      .getAttribute("data-background")
-      .should.be.eql("green");
-    unmountModal();
-  });
-
-  it("additional testId attribute", () => {
-    const modal = renderModal({ isOpen: true, testId: "foo-bar" }, "hello");
-    mcontent(modal)
-      .getAttribute("data-testid")
-      .should.be.eql("foo-bar");
-    unmountModal();
-  });
-
-  it("raises an exception if the appElement selector does not match", () => {
-    should(() => ariaAppHider.setElement(".test")).throw();
-  });
-
-  it("removes aria-hidden from appElement when unmounted w/o closing", () => {
-    const el = document.createElement("div");
-    const node = document.createElement("div");
-    ReactDOM.render(<Modal isOpen appElement={el} />, node);
-    el.getAttribute("aria-hidden").should.be.eql("true");
-    ReactDOM.unmountComponentAtNode(node);
-    should(el.getAttribute("aria-hidden")).not.be.ok();
-  });
-
-  // eslint-disable-next-line max-len
-  it("removes aria-hidden when closed and another modal with ariaHideApp set to false is open", () => {
-    const rootNode = document.createElement("div");
-    document.body.appendChild(rootNode);
-
-    const appElement = document.createElement("div");
-    document.body.appendChild(appElement);
-
-    Modal.setAppElement(appElement);
-
-    const initialState = (
-      <div>
-        <Modal isOpen={true} ariaHideApp={false} id="test-1-modal-1" />
-        <Modal isOpen={true} ariaHideApp={true} id="test-1-modal-2" />
-      </div>
-    );
-
-    ReactDOM.render(initialState, rootNode);
-    appElement.getAttribute("aria-hidden").should.be.eql("true");
-
-    const updatedState = (
-      <div>
-        <Modal isOpen={true} ariaHideApp={false} id="test-1-modal-1" />
-        <Modal isOpen={false} ariaHideApp={true} id="test-1-modal-2" />
-      </div>
-    );
-
-    ReactDOM.render(updatedState, rootNode);
-    should(appElement.getAttribute("aria-hidden")).not.be.ok();
-
-    ReactDOM.unmountComponentAtNode(rootNode);
-  });
-
-  // eslint-disable-next-line max-len
-  it("maintains aria-hidden when closed and another modal with ariaHideApp set to true is open", () => {
-    const rootNode = document.createElement("div");
-    document.body.appendChild(rootNode);
-
-    const appElement = document.createElement("div");
-    document.body.appendChild(appElement);
-
-    Modal.setAppElement(appElement);
-
-    const initialState = (
-      <div>
-        <Modal isOpen={true} ariaHideApp={true} id="test-1-modal-1" />
-        <Modal isOpen={true} ariaHideApp={true} id="test-1-modal-2" />
-      </div>
-    );
-
-    ReactDOM.render(initialState, rootNode);
-    appElement.getAttribute("aria-hidden").should.be.eql("true");
-
-    const updatedState = (
-      <div>
-        <Modal isOpen={true} ariaHideApp={true} id="test-1-modal-1" />
-        <Modal isOpen={false} ariaHideApp={true} id="test-1-modal-2" />
-      </div>
-    );
-
-    ReactDOM.render(updatedState, rootNode);
-    appElement.getAttribute("aria-hidden").should.be.eql("true");
-
-    ReactDOM.unmountComponentAtNode(rootNode);
-  });
-
-  // eslint-disable-next-line max-len
-  it("removes aria-hidden when unmounted without close and second modal with ariaHideApp=false is open", () => {
-    const appElement = document.createElement("div");
-    document.body.appendChild(appElement);
-    Modal.setAppElement(appElement);
-
-    renderModal({ isOpen: true, ariaHideApp: false, id: "test-2-modal-1" });
-    should(appElement.getAttribute("aria-hidden")).not.be.ok();
-
-    renderModal({ isOpen: true, ariaHideApp: true, id: "test-2-modal-2" });
-    appElement.getAttribute("aria-hidden").should.be.eql("true");
-
-    unmountModal();
-    should(appElement.getAttribute("aria-hidden")).not.be.ok();
-  });
-
-  // eslint-disable-next-line max-len
-  it("maintains aria-hidden when unmounted without close and second modal with ariaHideApp=true is open", () => {
-    const appElement = document.createElement("div");
-    document.body.appendChild(appElement);
-    Modal.setAppElement(appElement);
-
-    renderModal({ isOpen: true, ariaHideApp: true, id: "test-3-modal-1" });
-    appElement.getAttribute("aria-hidden").should.be.eql("true");
-
-    renderModal({ isOpen: true, ariaHideApp: true, id: "test-3-modal-2" });
-    appElement.getAttribute("aria-hidden").should.be.eql("true");
-
-    unmountModal();
-    appElement.getAttribute("aria-hidden").should.be.eql("true");
-  });
-
-  it("adds --after-open for animations", () => {
-    const modal = renderModal({ isOpen: true });
-    const rg = /--after-open/i;
-    rg.test(mcontent(modal).className).should.be.ok();
-    rg.test(moverlay(modal).className).should.be.ok();
-  });
-
-  it("adds --before-close for animations", () => {
-    const closeTimeoutMS = 50;
+    const closeTimeoutMS = 100;
     const modal = renderModal({
       isOpen: true,
       closeTimeoutMS
     });
-    modal.portal.closeWithTimeout();
 
-    const rg = /--before-close/i;
-    rg.test(moverlay(modal).className).should.be.ok();
-    rg.test(mcontent(modal).className).should.be.ok();
-
-    modal.portal.closeWithoutTimeout();
-  });
-
-  it("should not be open after close with time out and reopen it", () => {
-    const modal = renderModal({
-      isOpen: true,
-      closeTimeoutMS: 2000,
-      onRequestClose() {}
-    });
-    modal.portal.closeWithTimeout();
-    modal.portal.open();
-    modal.portal.closeWithoutTimeout();
-    modal.portal.state.isOpen.should.not.be.ok();
-  });
-
-  it("verify default prop of shouldCloseOnOverlayClick", () => {
-    const modal = renderModal({ isOpen: true });
-    modal.props.shouldCloseOnOverlayClick.should.be.ok();
-  });
-
-  it("verify prop of shouldCloseOnOverlayClick", () => {
-    const modalOpts = { isOpen: true, shouldCloseOnOverlayClick: false };
-    const modal = renderModal(modalOpts);
-    modal.props.shouldCloseOnOverlayClick.should.not.be.ok();
-  });
-
-  it("keeps the modal in the DOM until closeTimeoutMS elapses", done => {
-    const closeTimeoutMS = 100;
-
-    const modal = renderModal({ isOpen: true, closeTimeoutMS });
-    modal.portal.closeWithTimeout();
-
-    function checkDOM(count) {
-      const overlay = document.querySelectorAll(".ReactModal__Overlay");
-      const content = document.querySelectorAll(".ReactModal__Content");
-      overlay.length.should.be.eql(count);
-      content.length.should.be.eql(count);
-    }
+    modal.close();
 
     // content is still mounted after modal is gone
     checkDOM(1);
@@ -603,7 +78,23 @@ export default () => {
       // content is unmounted after specified timeout
       checkDOM(0);
       done();
-    }, closeTimeoutMS);
+    }, closeTimeoutMS + 10);
+  });
+
+  xit("use overlayRef and contentRef", () => {
+    let overlay = null;
+    let content = null;
+
+    renderModal({
+      isOpen: true,
+      overlayRef: node => (overlay = node),
+      contentRef: node => (content = node)
+    });
+
+    overlay.should.be.instanceOf(HTMLElement);
+    content.should.be.instanceOf(HTMLElement);
+    overlay.classList.contains("ReactModal__Overlay");
+    content.classList.contains("ReactModal__Content");
   });
 
   xit("shouldn't throw if forcibly unmounted during mounting", () => {
@@ -642,67 +133,578 @@ export default () => {
     document.body.removeChild(currentDiv);
   });
 
-  it("verify that portalClassName is refreshed on component update", () => {
-    const node = document.createElement("div");
-    let modal = null;
-
-    class App extends Component {
-      constructor(props) {
-        super(props);
-        this.state = { testHasChanged: false };
-      }
-
-      componentDidMount() {
-        modal.node.className.should.be.eql("myPortalClass");
-
-        this.setState({
-          testHasChanged: true
-        });
-      }
-
-      componentDidUpdate() {
-        modal.node.className.should.be.eql("myPortalClass-modifier");
-      }
-
-      render() {
-        const portalClassName =
-          this.state.testHasChanged === true
-            ? "myPortalClass-modifier"
-            : "myPortalClass";
-
-        return (
-          <div>
-            <Modal
-              ref={modalComponent => {
-                modal = modalComponent;
-              }}
-              isOpen
-              portalClassName={portalClassName}
-            >
-              <span>Test</span>
-            </Modal>
-          </div>
-        );
-      }
-    }
-
-    Modal.setAppElement(node);
-    ReactDOM.render(<App />, node);
+  xit("should not be open after close with time out and reopen it", () => {
+    const modal = renderModal({
+      isOpen: true,
+      closeTimeoutMS: 2000,
+      onRequestClose() {}
+    });
+    modal.portal.closeWithTimeout();
+    modal.portal.open();
+    modal.portal.closeWithoutTimeout();
+    modal.portal.state.isOpen.should.not.be.ok();
   });
 
-  it("use overlayRef and contentRef", () => {
-    let overlay = null;
-    let content = null;
+  xit("keeps the modal in the DOM until closeTimeoutMS elapses", done => {
+    const closeTimeoutMS = 100;
 
-    renderModal({
-      isOpen: true,
-      overlayRef: node => (overlay = node),
-      contentRef: node => (content = node)
+    const modal = renderModal({ isOpen: true, closeTimeoutMS });
+    modal.portal.closeWithTimeout();
+
+    function checkDOM(count) {
+      const overlay = document.querySelectorAll(".ReactModal__Overlay");
+      const content = document.querySelectorAll(".ReactModal__Content");
+      overlay.length.should.be.eql(count);
+      content.length.should.be.eql(count);
+    }
+
+    // content is still mounted after modal is gone
+    checkDOM(1);
+
+    setTimeout(() => {
+      // content is unmounted after specified timeout
+      checkDOM(0);
+      done();
+    }, closeTimeoutMS);
+  });
+
+  context("managing class names attributes", () => {
+    it("define content class name.", () => {
+      const m = renderModal({
+        isOpen: true,
+        className: "A"
+      });
+      const contentClassNames = m.content.classList;
+      contentClassNames.contains("A").should.be.ok();
     });
 
-    overlay.should.be.instanceOf(HTMLElement);
-    content.should.be.instanceOf(HTMLElement);
-    overlay.classList.contains("ReactModal__Overlay");
-    content.classList.contains("ReactModal__Content");
+    xit("define overlay class name.", () => {
+      const m = renderModal({
+        isOpen: true,
+        overlayClassName: "A"
+      });
+      const overlayElementClassNames = m.overlay.classList;
+      overlayElementClassNames.contains("A").should.be.ok();
+    });
+
+    xit("define portal class name.", () => {
+      const m = renderModal({
+        isOpen: true,
+        portalClassName: "A"
+      });
+      const parentElementClassNames = m.node.classList;
+      parentElementClassNames.contains("A").should.be.ok();
+    });
+
+    xit("can change portal class name.", () => {
+      const node = document.createElement("div");
+      let modal = null;
+
+      class App extends Component {
+        state = { testHasChanged: false };
+
+        componentDidMount() {
+          modal.node.className.should.be.eql("A");
+          this.setState({ testHasChanged: true });
+        }
+
+        componentDidUpdate() {
+          modal.node.className.should.be.eql("B");
+        }
+
+        modalRef = ref => (modal = ref);
+
+        render() {
+          const portalClassName = this.state.testHasChanged ? "B" : "A";
+
+          return (
+            <div>
+              <Modal ref={this.modalRef}
+                     isOpen
+                     portalClassName={portalClassName}>
+                <span>Test</span>
+              </Modal>
+            </div>
+          );
+        }
+      }
+
+      ReactDOM.render(<App />, node);
+    });
+
+    xit("adds --after-open for animations", () => {
+      const modal = renderModal({ isOpen: true });
+      const rg = /--after-open/i;
+      rg.test(mcontent(modal).className).should.be.ok();
+      rg.test(moverlay(modal).className).should.be.ok();
+    });
+
+    xit("adds --before-close for animations", () => {
+      const closeTimeoutMS = 50;
+      const modal = renderModal({
+        isOpen: true,
+        closeTimeoutMS
+      });
+      modal.portal.closeWithTimeout();
+
+      const rg = /--before-close/i;
+      rg.test(moverlay(modal).className).should.be.ok();
+      rg.test(mcontent(modal).className).should.be.ok();
+
+      modal.portal.closeWithoutTimeout();
+    });
+
+    context("document.body", () => {
+      xit("append default class when open.", () => {
+        renderModal({ isOpen: true });
+        isBodyWithReactModalOpenClass().should.be.ok();
+      });
+
+      xit("don't append default class when closed.", () => {
+        renderModal({ isOpen: false });
+        isBodyWithReactModalOpenClass().should.not.be.ok();
+      });
+
+      xit("append custom class when open.", () => {
+        renderModal({
+          isOpen: true,
+          bodyOpenClassName: "A"
+        });
+        isBodyWithReactModalOpenClass("A").should.be.ok();
+      });
+
+      xit("don't append custom class when closed.", () => {
+        renderModal({
+          isOpen: false,
+          bodyOpenClassName: "A"
+        });
+        isBodyWithReactModalOpenClass("A").should.not.be.ok();
+      });
+
+      xit("remove class when unmounted without closing", () => {
+        renderModal({ isOpen: true });
+        unmountModal();
+        isBodyWithReactModalOpenClass().should.not.be.ok();
+      });
+    });
+
+    context("<html />", () => {
+      xit("classList must be empty when open.", () => {
+        renderModal({ isOpen: true });
+        Array.from(htmlClassList()).should.be.empty();
+      });
+
+      xit("classList must be empty when closed.", () => {
+        renderModal({ isOpen: true });
+        Array.from(htmlClassList()).should.be.empty();
+      });
+
+      xit("append custom class when open.", () => {
+        renderModal({
+          isOpen: true,
+          htmlOpenClassName: "A"
+        });
+        isHtmlWithReactModalOpenClass("A").should.be.ok();
+      });
+
+      xit("don't append class if modal is closed.", () => {
+        renderModal({
+          isOpen: false,
+          htmlOpenClassName: "A"
+        });
+        isHtmlWithReactModalOpenClass("A").should.not.be.ok();
+      });
+
+      xit("remove class when unmounted without closing", () => {
+        renderModal({
+          isOpen: true,
+          htmlOpenClassName: "A"
+        });
+        unmountModal();
+        isHtmlWithReactModalOpenClass("A").should.not.be.ok();
+      });
+    });
+
+    xit("overrides content classes with custom object className", () => {
+      const modal = renderModal({
+        isOpen: true,
+        className: {
+          base: "myClass",
+          afterOpen: "myClass_after-open",
+          beforeClose: "myClass_before-close"
+        }
+      });
+      mcontent(modal).className.should.be.eql("myClass myClass_after-open");
+      unmountModal();
+    });
+
+    xit("overrides overlay classes with custom object overlayClassName", () => {
+      const modal = renderModal({
+        isOpen: true,
+        overlayClassName: {
+          base: "myOverlayClass",
+          afterOpen: "myOverlayClass_after-open",
+          beforeClose: "myOverlayClass_before-close"
+        }
+      });
+      moverlay(modal).className.should.be.eql(
+        "myOverlayClass myOverlayClass_after-open"
+      );
+      unmountModal();
+    });
+
+    xit("supports adding/removing multiple document.body classes", () => {
+      renderModal({
+        isOpen: true,
+        bodyOpenClassName: "A B C"
+      });
+      unmountModal();
+      document.body.classList.contains("A", "B", "C").should.not.be.ok();
+    });
+
+    xit("does not remove shared classes if more than one modal is open", () => {
+      renderModal({
+        isOpen: true,
+        bodyOpenClassName: "A"
+      });
+      renderModal({
+        isOpen: true,
+        bodyOpenClassName: "A B"
+      });
+
+      isBodyWithReactModalOpenClass("A B").should.be.ok();
+      unmountModal();
+      isBodyWithReactModalOpenClass("A B").should.not.be.ok();
+      isBodyWithReactModalOpenClass("A").should.be.ok();
+      unmountModal();
+      isBodyWithReactModalOpenClass("A").should.not.be.ok();
+    });
+  });
+
+  context("parentSelector", () => {
+    xit("default `parentSelector` should be document.body.", () => {
+      const modal = renderModal();
+      modal.props.parentSelector().should.be.eql(document.body);
+    });
+
+    xit("should render on a different `parentSelector`.", () => {
+      const node = document.createElement("div");
+      const root = document.createElement("div");
+      class App extends Component {
+        render() {
+          return (
+            <div>
+              <Modal isOpen parentSelector={() => node}>
+                <span>hello</span>
+              </Modal>
+            </div>
+          );
+        }
+      }
+      ReactDOM.render(<App />, root);
+      node.firstChild.should.be.ok();
+      ReactDOM.unmountComponentAtNode(root);
+    });
+  });
+
+  context("application element", () => {
+    xit("setting the application element.", () => {
+      const el = document.createElement("div");
+      const node = document.createElement("div");
+      ReactDOM.render((
+        <Modal isOpen={true} appElement={el} />
+      ), node);
+      const isHidden = (el.getAttribute("aria-hidden") === "true") || false;
+      Boolean(isHidden).should.be.eql(true);
+      ReactDOM.unmountComponentAtNode(node);
+    });
+
+    xit("allow setting appElement of type string", () => {
+      const node = document.createElement("div");
+      class App extends Component {
+        render() {
+          return (
+            <div>
+              <Modal isOpen>
+                <span>hello</span>
+              </Modal>
+            </div>
+          );
+        }
+      }
+      const appElement = "body";
+      Modal.setAppElement(appElement);
+      ReactDOM.render(<App />, node);
+      document.body
+        .querySelector(".ReactModalPortal")
+        .parentNode.should.be.eql(document.body);
+      ReactDOM.unmountComponentAtNode(node);
+    });
+  });
+
+  context("aria attributes", () => {
+    xit("default aria role.", () => {
+      const child = "I am a child of Modal, and he has sent me here...";
+      const modal = renderModal({ isOpen: true }, child);
+      contentAttribute(modal, "role").should.be.eql("dialog");
+    });
+
+    xit("custom aria role.", () => {
+      const child = "I am a child of Modal, and he has sent me here...";
+      const modal = renderModal({
+        isOpen: true,
+        role: "dialog"
+      }, child);
+      contentAttribute(modal, "role").should.be.eql("dialog");
+    });
+
+    xit("disable aria rolw when `null`", () => {
+      const child = "I am a child of Modal, and he has sent me here...";
+      const modal = renderModal({
+        isOpen: true,
+        role: null
+      }, child);
+      should(contentAttribute(modal, "role")).be.eql(null);
+    });
+
+    xit("aria-label based on the contentLabel property.", () => {
+      const child = "I am a child of Modal, and he has sent me here...";
+      const modal = renderModal({
+        isOpen: true,
+        contentLabel: "Special Modal"
+      }, child);
+
+      contentAttribute(
+        modal, "aria-label"
+      ).should.be.eql("Special Modal");
+    });
+
+    xit("additional attributes passing as object.", () => {
+      const modal = renderModal({
+        isOpen: true,
+        aria: { labelledby: "a" }
+      });
+      mcontent(modal)
+        .getAttribute("aria-labelledby")
+        .should.be.eql("a");
+      unmountModal();
+    });
+  });
+
+  context("managing focus", () => {
+    xit("focuses the modal content by default", () => {
+          const modal = renderModal({ isOpen: true }, null);
+      document.activeElement.should.be.eql(mcontent(modal));
+    });
+
+    xit("does not focus modal content if shouldFocusAfterRender is false", () => {
+          const modal = renderModal(
+            { isOpen: true, shouldFocusAfterRender: false },
+            null
+          );
+      document.activeElement.should.not.be.eql(mcontent(modal));
+    });
+
+    xit("give back focus to previous element or modal.", done => {
+          function cleanup() {
+            unmountModal();
+            done();
+          }
+      const modalA = renderModal(
+        {
+          isOpen: true,
+          className: "modal-a",
+          onRequestClose: cleanup
+        },
+        null
+      );
+
+      const modalContent = mcontent(modalA);
+      document.activeElement.should.be.eql(modalContent);
+
+      const modalB = renderModal(
+        {
+          isOpen: true,
+          className: "modal-b",
+          onRequestClose() {
+            const modalContent = mcontent(modalB);
+            document.activeElement.should.be.eql(mcontent(modalA));
+            escKeyDown(modalContent);
+            document.activeElement.should.be.eql(modalContent);
+          }
+        },
+        null
+      );
+
+      escKeyDown(modalContent);
+    });
+
+    xit("does not steel focus when a descendent is already focused", () => {
+          let content;
+      const input = (
+        <input
+          ref={el => {
+            el && el.focus();
+            content = el;
+          }}
+          />
+      );
+      renderModal({ isOpen: true }, input, () => {
+        document.activeElement.should.be.eql(content);
+      });
+    });
+  });
+
+  context("hidding application", () => {
+    xit("raises an exception if the appElement selector does not match", () => {
+      should(() => ariaAppHider.setElement(".test")).throw();
+    });
+
+    xit("removes aria-hidden from appElement when unmounted w/o closing", () => {
+      const el = document.createElement("div");
+      const node = document.createElement("div");
+      ReactDOM.render((
+        <Modal isOpen appElement={el} />
+      ), node);
+      el.getAttribute("aria-hidden").should.be.eql("true");
+      ReactDOM.unmountComponentAtNode(node);
+      should(el.getAttribute("aria-hidden")).not.be.ok();
+    });
+
+    // eslint-disable-next-line max-len
+    xit("removes aria-hidden only when all modal were closed.", () => {
+      const rootNode = document.createElement("div");
+      document.body.appendChild(rootNode);
+
+      const appElement = document.createElement("div");
+      document.body.appendChild(appElement);
+
+      Modal.setAppElement(appElement);
+
+      const initialState = (
+        <div>
+          <Modal isOpen={true} ariaHideApp={false} id="test-1-modal-1" />
+          <Modal isOpen={true} ariaHideApp={true} id="test-1-modal-2" />
+        </div>
+      );
+
+      ReactDOM.render(initialState, rootNode);
+      appElement.getAttribute("aria-hidden").should.be.eql("true");
+
+      const updatedState = (
+        <div>
+          <Modal isOpen={true} ariaHideApp={false} id="test-1-modal-1" />
+          <Modal isOpen={false} ariaHideApp={true} id="test-1-modal-2" />
+        </div>
+      );
+
+      ReactDOM.render(updatedState, rootNode);
+      should(appElement.getAttribute("aria-hidden")).not.be.ok();
+
+      ReactDOM.unmountComponentAtNode(rootNode);
+    });
+
+    // eslint-disable-next-line max-len
+    xit("don't remove aria-hidden if another modal is open.", () => {
+      const rootNode = document.createElement("div");
+      document.body.appendChild(rootNode);
+
+      const appElement = document.createElement("div");
+      document.body.appendChild(appElement);
+
+      Modal.setAppElement(appElement);
+
+      const initialState = (
+        <div>
+          <Modal isOpen={true} ariaHideApp={true} id="test-1-modal-1" />
+          <Modal isOpen={true} ariaHideApp={true} id="test-1-modal-2" />
+        </div>
+      );
+
+      ReactDOM.render(initialState, rootNode);
+      appElement.getAttribute("aria-hidden").should.be.eql("true");
+
+      const updatedState = (
+        <div>
+          <Modal isOpen={true} ariaHideApp={true} id="test-1-modal-1" />
+          <Modal isOpen={false} ariaHideApp={true} id="test-1-modal-2" />
+        </div>
+      );
+
+      ReactDOM.render(updatedState, rootNode);
+      appElement.getAttribute("aria-hidden").should.be.eql("true");
+
+      ReactDOM.unmountComponentAtNode(rootNode);
+    });
+
+    // eslint-disable-next-line max-len
+    xit("removes aria-hidden when unmounted without close and second modal with ariaHideApp=false is open", () => {
+      const appElement = document.createElement("div");
+      document.body.appendChild(appElement);
+      Modal.setAppElement(appElement);
+
+      renderModal({ isOpen: true, ariaHideApp: false, id: "test-2-modal-1" });
+      should(appElement.getAttribute("aria-hidden")).not.be.ok();
+
+      renderModal({ isOpen: true, ariaHideApp: true, id: "test-2-modal-2" });
+      appElement.getAttribute("aria-hidden").should.be.eql("true");
+
+      unmountModal();
+      should(appElement.getAttribute("aria-hidden")).not.be.ok();
+    });
+
+    // eslint-disable-next-line max-len
+    xit("maintains aria-hidden when unmounted without close and second modal with ariaHideApp=true is open", () => {
+      const appElement = document.createElement("div");
+      document.body.appendChild(appElement);
+      Modal.setAppElement(appElement);
+
+      renderModal({ isOpen: true, ariaHideApp: true, id: "test-3-modal-1" });
+      appElement.getAttribute("aria-hidden").should.be.eql("true");
+
+      renderModal({ isOpen: true, ariaHideApp: true, id: "test-3-modal-2" });
+      appElement.getAttribute("aria-hidden").should.be.eql("true");
+
+      unmountModal();
+      appElement.getAttribute("aria-hidden").should.be.eql("true");
+    });
+  });
+
+  context("additional attributes", () => {
+    xit("additional data attributes", () => {
+      const modal = renderModal({
+        isOpen: true,
+        data: { background: "green" }
+      });
+      mcontent(modal).getAttribute(
+        "data-background"
+      ).should.be.eql("green");
+    });
+
+    xit("additional testId attribute", () => {
+      const modal = renderModal({
+        isOpen: true,
+        testId: "foo-bar"
+      });
+      mcontent(modal).getAttribute(
+        "data-testid"
+      ).should.be.eql("foo-bar");
+    });
+  });
+
+  context("shouldCloseOnOverlayClick.", () => {
+    xit("default is true.", () => {
+      const modal = renderModal({ isOpen: true });
+      modal.props.shouldCloseOnOverlayClick.should.be.ok();
+    });
+
+    xit("disable shouldCloseOnOverlayClick.", () => {
+      const modalOpts = {
+        isOpen: true,
+        shouldCloseOnOverlayClick: false
+      };
+      const modal = renderModal(modalOpts);
+      modal.props.shouldCloseOnOverlayClick.should.not.be.ok();
+    });
   });
 };

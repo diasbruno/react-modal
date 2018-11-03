@@ -22,11 +22,13 @@ if (!String.prototype.includes) {
   };
 }
 
+export const docBody = document.body;
+
 /**
  * Return the class list object from `document.body`.
  * @return {Array}
  */
-export const documentBodyClassList = () => document.body.classList;
+export const documentBodyClassList = () => docBody.classList;
 
 /**
  * Check if the document.body contains the react modal
@@ -34,14 +36,20 @@ export const documentBodyClassList = () => document.body.classList;
  * @return {Boolean}
  */
 export const isBodyWithReactModalOpenClass = (bodyClass = bodyOpenClassName) =>
-  document.body.className.includes(bodyClass);
+  documentBodyClassList().contains(bodyClass);
+
+/**
+ * <html />.
+ * @return {Array}
+ */
+export const htmlElement =
+  document.getElementsByTagName("html")[0];
 
 /**
  * Return the class list object from <html />.
  * @return {Array}
  */
-export const htmlClassList = () =>
-  document.getElementsByTagName("html")[0].classList;
+export const htmlClassList = () => htmlElement.classList;
 
 /**
  * Check if the html contains the react modal
@@ -72,7 +80,8 @@ const getModalAttribute = component => (instance, attr) =>
  * @param {React} A react instance.
  * @return {DOMElement}
  */
-const modalComponent = component => instance => instance.portal[component];
+const modalComponent =
+  component => instance => instance.portal[component];
 
 /**
  * Returns the modal content.
@@ -150,7 +159,7 @@ export const renderModal = function(props, children, callback) {
 
   // eslint-disable-next-line react/no-render-return-value
   return ReactDOM.render(
-    <Modal {...modalProps}>{children}</Modal>,
+    <Modal {...modalProps}>{children || "hello"}</Modal>,
     currentDiv,
     callback
   );

@@ -3,6 +3,12 @@ import { canUseDOM } from "./safeHTMLElement";
 
 let globalElement = null;
 
+export const attributesFromObject = (prefix, items) =>
+  Object.keys(items).reduce((acc, name) => {
+    acc[`${prefix}-${name}`] = items[name];
+    return acc;
+  }, {});
+
 export function assertNodeList(nodeList, selector) {
   if (!nodeList || !nodeList.length) {
     throw new Error(
